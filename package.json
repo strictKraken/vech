@@ -1,6 +1,6 @@
 {
   "name": "vue-echarts",
-  "version": "7.0.3",
+  "version": "1.0.0",
   "description": "Vue.js component for Apache ECharts™.",
   "license": "MIT",
   "repository": "https://github.com/ecomfe/vue-echarts.git",
@@ -8,7 +8,7 @@
   "scripts": {
     "serve": "vue-cli-service serve",
     "build": "pnpm run docs && rimraf dist && pnpm run build:rollup",
-    "build:rollup": "vue-demi-switch 3 && rollup -c rollup.config.js",
+    "build:rollup": "rollup -c rollup.config.js",
     "lint": "vue-cli-service lint",
     "publint": "publint",
     "build:demo": "vue-cli-service build",
@@ -29,9 +29,6 @@
     "dist",
     "scripts/postinstall.js"
   ],
-  "dependencies": {
-    "vue-demi": "^0.13.11"
-  },
   "peerDependencies": {
     "@vue/runtime-core": "^3.0.0",
     "echarts": "^5.5.1",
@@ -83,8 +80,7 @@
     "rollup-plugin-import-css": "^3.5.1",
     "tslib": "^2.6.3",
     "typescript": "5.5.4",
-    "vue": "^3.4.33",
-    "vue2": "npm:vue@^2.7.16",
+    "vue": "^2.7.16",
     "webpack": "^5.93.0"
   }
 }

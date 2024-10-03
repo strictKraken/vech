@@ -1,5 +1,4 @@
 /* eslint-disable vue/multi-word-component-names */
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import {
   defineComponent,
   shallowRef,
@@ -13,9 +12,11 @@ import {
   nextTick,
   watchEffect,
   getCurrentInstance,
-  Vue2
-} from "vue-demi";
-import { init as initChart } from "echarts/core";
+  InjectionKey,
+  PropType,
+} from "vue";
+
+import { init as initChart } from "echarts";
 
 import {
   usePublicAPI,
@@ -27,7 +28,6 @@ import {
 import { isOn, omitOn, unwrapInjected } from "./utils";
 import { register, TAG_NAME } from "./wc";
 
-import type { PropType, InjectionKey } from "vue-demi";
 import type {
   EChartsType,
   EventTarget,
@@ -46,10 +46,6 @@ import "./style.css";
 
 const __CSP__ = false;
 const wcRegistered = __CSP__ ? false : register();
-
-if (Vue2) {
-  Vue2.config.ignoredElements.push(TAG_NAME);
-}
 
 export const THEME_KEY = "ecTheme" as unknown as InjectionKey<ThemeInjection>;
 export const INIT_OPTIONS_KEY =
@@ -105,56 +101,13 @@ export default defineComponent({
     const listeners = getCurrentInstance().proxy.$listeners;
     const realListeners: Record<string, any> = {};
 
-    if (!listeners) {
-      // This is for Vue 3.
-      // We are converting all `on<Event>` props to event listeners compatible with Vue 2
-      // and collect them into `realListeners` so that we can bind them to the chart instance
-      // later in the same way.
-      // For `onNative:<event>` props, we just strip the `Native:` part and collect them into
-      // `nativeListeners` so that we can bind them to the root element directly.
-      Object.keys(attrs)
-        .filter(key => isOn(key))
-        .forEach(key => {
-          // onClick    -> c + lick
-          // onZr:click -> z + r:click
-          let event = key.charAt(2).toLowerCase() + key.slice(3);
-
-          // Collect native DOM events
-          if (event.indexOf("native:") === 0) {
-            // native:click -> onClick
-            const nativeKey = `on${event.charAt(7).toUpperCase()}${event.slice(
-              8
-            )}`;
-
-            nativeListeners[nativeKey] = attrs[key];
-            return;
-          }
-
-          // clickOnce    -> ~click
-          // zr:clickOnce -> ~zr:click
-          if (event.substring(event.length - 4) === "Once") {
-            event = `~${event.substring(0, event.length - 4)}`;
-          }
-
-          realListeners[event] = attrs[key];
-        });
-    } else {
-      // This is for Vue 2.
-      // We just need to distinguish normal events and `native:<event>` events and
-      // collect them into `realListeners` and `nativeListeners` respectively.
-      // For `native:<event>` events, we just strip the `native:` part and collect them
-      // into `nativeListeners` so that we can bind them to the root element directly.
-      // native:click   -> click
-      // ~native:click  -> ~click
-      // &~!native:click -> &~!click
-      Object.keys(listeners).forEach(key => {
-        if (NATIVE_EVENT_RE.test(key)) {
-          nativeListeners[key.replace(NATIVE_EVENT_RE, "$1")] = listeners[key];
-        } else {
-          realListeners[key] = listeners[key];
-        }
-      });
-    }
+    Object.keys(listeners).forEach(key => {
+      if (NATIVE_EVENT_RE.test(key)) {
+        nativeListeners[key.replace(NATIVE_EVENT_RE, "$1")] = listeners[key];
+      } else {
+        realListeners[key] = listeners[key];
+      }
+    });
 
     function init(option?: Option) {
       if (!root.value) {
@@ -184,9 +137,9 @@ export default defineComponent({
           handler.__once__ = true;
         }
 
-        let target: EventTarget = instance;
+        let target: EventTarget = instance as unknown as EventTarget;
         if (event.indexOf("zr:") === 0) {
-          target = instance.getZr();
+          target = instance.getZr() as unknown as EventTarget;
           event = event.substring(3);
         }
 
@@ -336,12 +289,8 @@ export default defineComponent({
     };
   },
   render() {
-    // Vue 3 and Vue 2 have different vnode props format:
-    // See https://v3-migration.vuejs.org/breaking-changes/render-function-api.html#vnode-props-format
     const attrs = (
-      Vue2
-        ? { attrs: this.nonEventAttrs, on: this.nativeListeners }
-        : { ...this.nonEventAttrs, ...this.nativeListeners }
+      { attrs: this.nonEventAttrs, on: this.nativeListeners }
     ) as any;
     attrs.ref = "root";
     attrs.class = attrs.class ? ["echarts"].concat(attrs.class) : "echarts";
