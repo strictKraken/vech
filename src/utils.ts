@@ -1,4 +1,4 @@
-import { unref, isRef } from "vue-demi";
+import { unref, isRef } from "vue";
 
 import type { Injection } from "./types";
 
